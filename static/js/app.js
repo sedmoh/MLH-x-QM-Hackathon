@@ -272,14 +272,9 @@
     removePending();
 
     if (result.error) {
-      const wantedLevel = level;
       level -= 1;
       setStatus("");
-      if (result.needs_key) {
-        showKeyForm(result.error, wantedLevel);
-      } else {
-        showNotice(result.error);
-      }
+      showNotice(result.error);
     } else {
       addHint(result.level || level, result.hint);
       previousHints.push(result.hint);
@@ -639,97 +634,7 @@
   }
 
   function removeNotices() {
-    els.hints.querySelectorAll(".notice, .key-form").forEach(function (n) { n.remove(); });
-  }
-
-  // Asks for the user's own Gemini key, saves it on this computer, then retries the hint.
-  function showKeyForm(message, wantedLevel) {
-    removeNotices();
-    els.hints.querySelectorAll(".hints-empty").forEach(function (n) { n.remove(); });
-
-    const form = document.createElement("form");
-    form.className = "key-form";
-    form.noValidate = true;
-
-    const heading = document.createElement("h3");
-    heading.textContent = "Connect to Gemini";
-
-    const intro = document.createElement("p");
-    intro.className = "key-form-intro";
-    intro.appendChild(document.createTextNode(message + " Hints come from Google's Gemma model, which needs a free API key. "));
-    const link = document.createElement("a");
-    link.href = "https://aistudio.google.com/apikey";
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.textContent = "Get a key from Google AI Studio (opens in your browser)";
-    intro.appendChild(link);
-    intro.appendChild(document.createTextNode("."));
-
-    const label = document.createElement("label");
-    label.htmlFor = "apiKey";
-    label.textContent = "Gemini API key";
-
-    const help = document.createElement("p");
-    help.id = "apiKeyHelp";
-    help.className = "key-form-help";
-    help.textContent = "Your key is saved only on this computer.";
-
-    const input = document.createElement("input");
-    input.id = "apiKey";
-    input.className = "text-input";
-    input.type = "password";
-    input.autocomplete = "off";
-    input.spellcheck = false;
-    input.setAttribute("aria-describedby", "apiKeyHelp apiKeyError");
-
-    const error = document.createElement("p");
-    error.id = "apiKeyError";
-    error.className = "field-error";
-    error.setAttribute("role", "alert");
-
-    const save = document.createElement("button");
-    save.type = "submit";
-    save.className = "button button-primary";
-    save.textContent = "Save key and get hint";
-
-    form.append(heading, intro, label, help, input, error, save);
-    els.hints.appendChild(form);
-    selectTab("hints");
-    input.focus();
-
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      if (busy) return;
-      const key = input.value.trim();
-      if (!key) {
-        error.textContent = "Please paste your API key.";
-        input.setAttribute("aria-invalid", "true");
-        input.focus();
-        return;
-      }
-
-      setBusy(true);
-      save.disabled = true;
-      setStatus("Saving your key…");
-      const result = await postJson("/api-key", { key: key });
-      setStatus("");
-
-      if (result.error) {
-        error.textContent = result.error;
-        input.setAttribute("aria-invalid", "true");
-        save.disabled = false;
-        setBusy(false);
-        input.focus();
-        return;
-      }
-
-      form.remove();
-      if (lastRunCode !== null) {
-        level = wantedLevel;
-        await getHint(lastRunCode);
-      }
-      setBusy(false);
-    });
+    els.hints.querySelectorAll(".notice").forEach(function (n) { n.remove(); });
   }
 
   // Turns the model's light markdown (`code`, **bold**, blank-line paragraphs)
