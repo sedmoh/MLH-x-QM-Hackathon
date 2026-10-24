@@ -1,0 +1,240 @@
+/* ---------- Tokens ---------- */
+
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --surface-sunk: #f1eee7;
+  --ink: #1c1a17;
+  --muted: #59544c;
+  --rule: #e2ddd2;
+  --border: #85806f;
+  --accent: #1f4e45;
+  --accent-hover: #163a33;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6efec;
+  --error: #9f2419;
+  --error-soft: #fbeceb;
+  --focus: #1f4e45;
+
+  /* Futura where installed (macOS, many Windows machines with Office); Jost is a free Futura-style fallback. */
+  --font-sans: Futura, "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --radius: 4px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  color-scheme: light;
+}
+
+/* Dark palette: used when the system prefers dark (unless the user picked light),
+   or when the user picked dark explicitly. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161513;
+    --surface: #1f1e1b;
+    --surface-sunk: #191816;
+    --ink: #ece8e0;
+    --muted: #b3ada2;
+    --rule: #34322d;
+    --border: #7d776c;
+    --accent: #8ec9ba;
+    --accent-hover: #a9d8cc;
+    --accent-ink: #0f1f1b;
+    --accent-soft: #1d2d29;
+    --error: #f2a197;
+    --error-soft: #2e1c1a;
+    --focus: #8ec9ba;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #161513;
+  --surface: #1f1e1b;
+  --surface-sunk: #191816;
+  --ink: #ece8e0;
+  --muted: #b3ada2;
+  --rule: #34322d;
+  --border: #7d776c;
+  --accent: #8ec9ba;
+  --accent-hover: #a9d8cc;
+  --accent-ink: #0f1f1b;
+  --accent-soft: #1d2d29;
+  --error: #f2a197;
+  --error-soft: #2e1c1a;
+  --focus: #8ec9ba;
+
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  font-feature-settings: "kern", "liga";
+}
+
+h1,
+h2 {
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: var(--surface-sunk);
+  border: 1px solid var(--rule);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+@media (min-width: 40rem) {
+  .container {
+    padding: 0 var(--space-6);
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: 10;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+}
+
+main:focus {
+  outline: none;
+}
+
+/* ---------- Header / footer ---------- */
+
+.site-header {
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.site-header .container {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.wordmark {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.wordmark:hover {
+  color: var(--accent);
+}
+
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-sunk);
+}
+
+.theme-toggle .icon-sun,
+.theme-toggle[aria-pressed="true"] .icon-moon {
+  display: none;
+}
+
+.theme-toggle[aria-pressed="true"] .icon-sun {
+  display: inline;
+}
+
+@media (max-width: 30rem) {
+  .tagline {
+    display: none;
+  }
+}
