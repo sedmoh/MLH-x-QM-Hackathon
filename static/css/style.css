@@ -1045,69 +1045,6 @@ main:focus {
   color: var(--error);
 }
 
-/* Asks for the user's own Gemini API key (desktop app, or no key on the server). */
-.key-form {
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-sunk);
-}
-
-.hint-list + .key-form {
-  margin-top: var(--space-3);
-}
-
-.key-form h3 {
-  font-size: 1.125rem;
-  margin: 0 0 var(--space-2);
-}
-
-.key-form-intro {
-  font-size: 1rem;
-  margin-bottom: var(--space-4);
-}
-
-.key-form label {
-  display: block;
-  font-weight: 600;
-}
-
-.key-form-help {
-  color: var(--muted);
-  font-size: 0.9375rem;
-  margin-bottom: var(--space-2);
-}
-
-.text-input {
-  display: block;
-  width: 100%;
-  min-height: 2.75rem;
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.key-form .button {
-  max-width: 100%;
-  white-space: normal;
-}
-
-.text-input[aria-invalid="true"] {
-  border-color: var(--error);
-  border-width: 2px;
-}
-
-.field-error {
-  min-height: 1.5em;
-  margin: var(--space-1) 0 var(--space-3);
-  color: var(--error);
-  font-size: 1rem;
-}
-
 .final-note {
   margin-top: var(--space-4);
   color: var(--muted);
