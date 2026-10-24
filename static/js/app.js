@@ -87,6 +87,7 @@
     const code = els.code.value;
 
     setBusy(true);
+    // If the student edited their code since the last run, hint on the new version.
     const ran = code === lastRunCode ? true : await runCode(code);
     if (ran) {
       level += 1;
@@ -267,7 +268,8 @@
     els.hints.querySelectorAll(".notice").forEach(function (n) { n.remove(); });
   }
 
-  
+  // Turns the model's light markdown (`code`, **bold**, blank-line paragraphs)
+  // into DOM nodes without ever using innerHTML.
   function renderInline(container, text) {
     const paragraphs = String(text).split(/\n\s*\n/);
     paragraphs.forEach(function (para) {
@@ -341,7 +343,11 @@
   }
 
   function updateThemeToggle() {
-    themeToggle.setAttribute("aria-pressed", String(currentTheme() === "dark"));
+    const dark = currentTheme() === "dark";
+    themeToggle.setAttribute("aria-pressed", String(dark));
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+      meta.setAttribute("content", dark ? "#161513" : "#1f4e45");
+    });
   }
 
   themeToggle.addEventListener("click", function () {
@@ -350,6 +356,7 @@
     try {
       localStorage.setItem("theme", next);
     } catch (err) {
+      // Storage can be blocked; the toggle still works for this visit.
     }
     updateThemeToggle();
   });
