@@ -50,7 +50,9 @@ def run_python(code):
     env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
     try:
         result = subprocess.run(
+            # stdin=DEVNULL so input() fails fast instead of reading the server's terminal.
             [sys.executable, "main.py"], check=False, cwd=folder, capture_output=True,
+            stdin=subprocess.DEVNULL,
             text=True, encoding="utf-8", errors="replace", timeout=5, env=env,
         )
         # Show "main.py" in tracebacks instead of the temporary folder path.
