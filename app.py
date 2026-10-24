@@ -6,23 +6,16 @@ import sys
 import tempfile
 import time
 
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, send_from_directory
 from google import genai
 from google.genai import errors, types
 
-from runtime import BASE_DIR, DATA_DIR, python_command
-
 # Read GEMINI_API_KEY from a local .env file if there is one. Never upload .env to GitHub.
-# In the desktop app this file lives in the user's app-data folder, never inside the app.
-ENV_FILE = os.path.join(DATA_DIR, ".env")
+ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 load_dotenv(ENV_FILE)
 
-app = Flask(
-    __name__,
-    template_folder=os.path.join(BASE_DIR, "templates"),
-    static_folder=os.path.join(BASE_DIR, "static"),
-)
+app = Flask(__name__)
 # Refuse uploads bigger than 10 MB.
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
@@ -111,7 +104,7 @@ client_key = None
 def get_client():
     """Create the Gemma client the first time it's needed, then reuse it.
 
-    A new client is made if the API key has changed since, for example after the user saves a new one.
+    A new client is made if the API key in .env has changed since.
     """
     global client, client_key
     key = os.environ["GEMINI_API_KEY"]
@@ -127,13 +120,7 @@ def have_api_key():
     return bool(os.environ.get("GEMINI_API_KEY"))
 
 
-def is_key_problem(message):
-    """True if Google's error means the API key itself is wrong, deleted or blocked."""
-    return any(s in message for s in ("API_KEY_INVALID", "API key not valid", "reported as leaked",
-                                      "API key expired", "PERMISSION_DENIED"))
-
-
-NO_KEY_MESSAGE = "Hints need a Gemini API key, and none has been added yet."
+NO_KEY_MESSAGE = "GEMINI_API_KEY is not set on the server."
 
 
 def call_gemma(system_instruction, prompt, screenshot=None):
@@ -186,10 +173,10 @@ def run_python(code):
     # when the server's shell sets FORCE_COLOR.
     env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHON_COLORS": "0"}
     try:
-        # The same Python that runs this app, on any computer (or the desktop app itself).
+        # sys.executable is the same Python that runs this app, on any computer.
         # stdin=DEVNULL so input() fails fast instead of reading the server's terminal.
         result = subprocess.run(
-            python_command(script_path), check=False, cwd=folder, capture_output=True,
+            [sys.executable, script_path], check=False, cwd=folder, capture_output=True,
             stdin=subprocess.DEVNULL,
             text=True, encoding="utf-8", errors="replace", timeout=5, env=env,
         )
@@ -344,7 +331,7 @@ def hint():
         screenshot = None
 
     if not have_api_key():
-        return jsonify({"error": NO_KEY_MESSAGE, "needs_key": True}), 503
+        return jsonify({"error": NO_KEY_MESSAGE}), 500
 
     # First try with the screenshot. If that fails, carry on without it.
     image_error = None
@@ -360,11 +347,6 @@ def hint():
         text = ask_gemma(code, output, level, previous_hints)
     except Exception as e:
         print("Gemma error:", e, file=sys.stderr)
-        if is_key_problem(str(e)):
-            return jsonify({
-                "error": "Google rejected the Gemini API key. It may be mistyped, deleted or blocked.",
-                "needs_key": True,
-            }), 503
         return jsonify({"error": "Could not get a hint from Gemma: " + str(e)}), 500
 
     if not text.strip():
@@ -389,7 +371,7 @@ def extract():
         return jsonify({"error": "Choose a screenshot first."}), 400
 
     if not have_api_key():
-        return jsonify({"error": NO_KEY_MESSAGE}), 503
+        return jsonify({"error": NO_KEY_MESSAGE}), 500
 
     try:
         # Not the tutor's system instruction: here we want the code copied exactly.
@@ -414,7 +396,7 @@ def upload():
         return jsonify({"error": "Please choose a PNG or JPG image."}), 400
 
     if not have_api_key():
-        return jsonify({"error": NO_KEY_MESSAGE}), 503
+        return jsonify({"error": NO_KEY_MESSAGE}), 500
 
     # Save it to a temporary file, upload that, then delete it.
     suffix = ".png" if image.mimetype == "image/png" else ".jpg"
@@ -430,25 +412,6 @@ def upload():
         return jsonify({"error": f"Could not upload your screenshot ({e})."}), 500
     finally:
         os.remove(path)
-
-
-@app.route("/api-key", methods=["POST"])
-def save_api_key():
-    """Save the user's own Gemini API key to .env (used by the desktop app's first-run form)."""
-    # Only someone on this computer may change the key, never a remote visitor.
-    if request.remote_addr not in ("127.0.0.1", "::1"):
-        return jsonify({"error": "The API key can only be changed on the computer running the app."}), 403
-
-    data = request.get_json(silent=True) or {}
-    key = data.get("key", "")
-    key = key.strip() if isinstance(key, str) else ""
-    if not key or len(key) > 200 or any(c.isspace() for c in key):
-        return jsonify({"error": "That doesn't look like an API key. Please paste it again."}), 400
-
-    os.makedirs(DATA_DIR, exist_ok=True)
-    set_key(ENV_FILE, "GEMINI_API_KEY", key)
-    os.environ["GEMINI_API_KEY"] = key
-    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":

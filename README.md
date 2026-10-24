@@ -48,10 +48,6 @@ This project uses **Gemma 4** (`gemma-4-26b-a4b-it`) through the Gemini API, wit
 - [Gemma 4](https://ai.google.dev/gemma) (`gemma-4-26b-a4b-it`): the open model that writes the hints, checks them for leaks, and reads code from screenshots
 - [python-dotenv](https://github.com/theskumar/python-dotenv): loads the API key from `.env`
 
-**Desktop app**
-- [pywebview](https://pywebview.flowrl.com/): shows the app in a native window
-- [PyInstaller](https://pyinstaller.org/): packages it as an executable
-
 **Frontend**
 - HTML, CSS and JavaScript, with no framework
 - [Jost](https://fonts.google.com/specimen/Jost) from Google Fonts, used as a free stand-in for Futura when Futura isn't installed
@@ -100,24 +96,6 @@ You need Python 3.10 or newer and a Gemini API key from [Google AI Studio](https
 5. Open [http://127.0.0.1:5001](http://127.0.0.1:5001).
 
 The server prints a line for every hint it creates, including how long it took and what the leak checker decided. To stop it, press `Ctrl+C`.
-
-## Desktop app
-
-Socratic Debugger can also run as a desktop app in its own window, with no Python install needed.
-
-**Using it:** download `Socratic-Debugger-windows.zip` from the [Releases page](../../releases), unzip it, and open `Socratic Debugger.exe` inside the folder. The first time you ask for a hint, the app asks for your own [Gemini API key](https://aistudio.google.com/apikey). The key is saved only on your computer, in `%APPDATA%\Socratic Debugger`.
-
-Windows may show a "Windows protected your PC" warning, because the app isn't code-signed. Click **More info**, then **Run anyway**.
-
-**Building it yourself:**
-
-```bash
-pip install -r requirements-desktop.txt
-python build.py
-```
-
-This creates `dist/Socratic Debugger/` and `dist/Socratic-Debugger-windows.zip`. Build on a Mac to get a Mac app. No API key is ever bundled into the build.
-
 ## Accessibility
 
 The interface is designed to meet WCAG 2.2 AA:
@@ -139,8 +117,6 @@ The logo is a question mark whose dot is a beetle. Below 48 px it switches to th
 | `static/icons/favicon.svg`, `favicon.ico` | Browser tab icon |
 | `static/icons/apple-touch-icon.png` | iPhone and iPad home screen |
 | `static/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Installable web app, through `static/site.webmanifest` |
-| `static/icons/app.ico` | Windows executable, for example with PyInstaller: `--icon static/icons/app.ico` |
-| `static/icons/icon-1024.png` | macOS app icon, or an Electron or Tauri build |
 | `static/icons/icon-16.png`, `icon-32.png`, `icon-48.png`, `icon-128.png` | Chrome extension, through the `"icons"` and `"action.default_icon"` fields of its `manifest.json` |
 
 ## Limitations
