@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A Socratic debugging tutor for beginner Python students. Get guiding hints, not answers.">
   <title>Socratic Debugger</title>
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon.ico') }}" sizes="48x48">
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('manifest') }}">
+  <meta name="theme-color" content="#1f4e45" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161513" media="(prefers-color-scheme: dark)">
+  <meta property="og:title" content="Socratic Debugger">
+  <meta property="og:description" content="A Socratic debugging tutor for beginner Python students. Get guiding hints, not answers.">
+  <meta property="og:image" content="{{ url_for('static', filename='icons/icon-512.png', _external=True) }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
@@ -24,7 +33,7 @@
 
   <header class="site-header">
     <div class="container">
-      <a class="wordmark" href="/">Socratic Debugger</a>
+      <a class="wordmark" href="/"><span class="logo-mark" aria-hidden="true"></span>Socratic Debugger</a>
       <div class="header-tools">
         <p class="tagline">Hints, not answers.</p>
         <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">
