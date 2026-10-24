@@ -1,96 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A Socratic debugging tutor for beginner Python students. Get guiding hints, not answers.">
   <title>Socratic Debugger</title>
-  <style>
-    body { font-family: sans-serif; max-width: 900px; margin: 30px auto; padding: 0 16px; }
-    textarea { width: 100%; height: 300px; font-family: monospace; font-size: 14px; }
-    button { font-size: 16px; padding: 8px 18px; margin: 10px 8px 10px 0; cursor: pointer; }
-    button:disabled { opacity: 0.5; cursor: default; }
-    pre { background: #f3f3f3; padding: 12px; white-space: pre-wrap; }
-    .hint { background: #eef6ff; border-left: 4px solid #3a7bd5; padding: 10px; margin: 8px 0; }
-    .error { color: #b00020; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <script>
+    // Apply a saved theme before first paint so the page doesn't flash.
+    try {
+      var savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "light" || savedTheme === "dark") {
+        document.documentElement.dataset.theme = savedTheme;
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <h1>Socratic Debugger</h1>
-  <p>Paste your broken Python code. You will get hints, not answers.</p>
+  <a class="skip-link" href="#main">Skip to main content</a>
 
-  <textarea id="code" placeholder="Paste your Python code here..."></textarea>
-  <br>
-  <button id="helpBtn" onclick="helpMe()">Help me</button>
-  <button id="stuckBtn" onclick="stillStuck()" disabled>Still stuck</button>
-  <span id="status"></span>
+  <header class="site-header">
+    <div class="container">
+      <a class="wordmark" href="/">Socratic Debugger</a>
+      <div class="header-tools">
+        <p class="tagline">Hints, not answers.</p>
+        <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">
+          <svg class="icon icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <svg class="icon icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>Dark mode</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <h2>Output</h2>
-  <pre id="output">(run your code to see output)</pre>
+  <main id="main" class="container" tabindex="-1">
+    <div class="intro">
+      <h1>Find the bug yourself, with a little help.</h1>
+      <p>Paste a Python program that isn't working. We'll run it, show you the real output, then ask you questions that lead you towards the problem. Each time you're still stuck, the hint gets a little more specific.</p>
+    </div>
 
-  <h2>Hints</h2>
-  <div id="hints"></div>
+    <div class="workspace">
+      <section class="panel panel-editor" aria-labelledby="editor-heading">
+        <div class="panel-head">
+          <h2 id="editor-heading">Your code</h2>
+          <button type="button" class="button button-small" id="exampleBtn">Load an example</button>
+        </div>
 
-  <script>
-    let level = 0;
-    let lastOutput = "";
+        <label for="code" class="field-label">Python source</label>
+        <p id="code-help" class="field-help">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run and get your first hint.</p>
+        <div class="editor">
+          <div class="gutter" id="gutter" aria-hidden="true">1</div>
+          <textarea id="code" name="code" spellcheck="false" autocomplete="off" autocapitalize="off"
+                    aria-describedby="code-help" placeholder="def greet(name):&#10;    print(&quot;Hello, &quot; + nme)"></textarea>
+        </div>
 
-    async function postJson(url, data) {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      return res.json();
-    }
+        <div class="actions">
+          <button type="button" class="button button-primary" id="helpBtn">Run and get a hint</button>
+          <button type="button" class="button button-secondary" id="stuckBtn" disabled>I'm still stuck</button>
+          <button type="button" class="button button-quiet" id="resetBtn">Start over</button>
+        </div>
 
-    async function helpMe() {
-      const code = document.getElementById("code").value;
-      document.getElementById("hints").innerHTML = "";
-      setStatus("Running your code...");
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
 
-      const result = await postJson("/run", { code: code });
-      lastOutput = result.stdout + result.stderr;
-      document.getElementById("output").textContent = lastOutput || "(no output)";
+      <div class="results">
+        <section class="panel" aria-labelledby="output-heading">
+          <div class="panel-head">
+            <h2 id="output-heading">Output</h2>
+            <p class="run-state" id="runState">Not run yet</p>
+          </div>
+          <pre class="output" id="output" tabindex="0" role="region" aria-label="Program output"><span class="output-empty">Run your code to see what it prints.</span></pre>
+        </section>
 
-      level = 1;
-      await getHint();
-    }
+        <section class="panel" aria-labelledby="hints-heading">
+          <div class="panel-head">
+            <h2 id="hints-heading">Hints</h2>
+          </div>
 
-    async function stillStuck() {
-      if (level >= 3) return;
-      level = level + 1;
-      await getHint();
-    }
+          <ol class="steps" aria-label="Hint progress">
+            <li data-step="1"><span class="step-num" aria-hidden="true">1</span> Nudge</li>
+            <li data-step="2"><span class="step-num" aria-hidden="true">2</span> Location</li>
+            <li data-step="3"><span class="step-num" aria-hidden="true">3</span> Concept</li>
+          </ol>
 
-    async function getHint() {
-      const code = document.getElementById("code").value;
-      setStatus("Thinking of a hint...");
-      setButtons(false);
+          <div id="hints" aria-live="polite">
+            <p class="hints-empty" id="hintsEmpty">Your hints will appear here. Read each one, have a go at fixing your code, and run it again.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
 
-      const result = await postJson("/hint", { code: code, output: lastOutput, level: level });
+  <footer class="site-footer">
+    <div class="container">
+      <p>Your code runs on this server for up to five seconds. Hints are generated by Gemma and may occasionally be wrong, so trust your own reasoning.</p>
+    </div>
+  </footer>
 
-      const box = document.createElement("div");
-      if (result.error) {
-        box.className = "error";
-        box.textContent = result.error;
-        level = level - 1;
-      } else {
-        box.className = "hint";
-        box.textContent = "Hint " + level + " of 3: " + result.hint;
-      }
-      document.getElementById("hints").appendChild(box);
-
-      setStatus("");
-      setButtons(true);
-    }
-
-    function setStatus(text) {
-      document.getElementById("status").textContent = text;
-    }
-
-    function setButtons(enabled) {
-      document.getElementById("helpBtn").disabled = !enabled;
-      document.getElementById("stuckBtn").disabled = !enabled || level < 1 || level >= 3;
-    }
-  </script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
