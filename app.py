@@ -6,7 +6,7 @@ import tempfile
 import time
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 from google import genai
 from google.genai import types
 
@@ -128,6 +128,18 @@ def read_code(data):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+# Browsers request /favicon.ico at the site root even without a <link> tag.
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(os.path.join(app.static_folder, "icons"), "favicon.ico")
+
+
+@app.route("/site.webmanifest")
+def manifest():
+    return send_from_directory(app.static_folder, "site.webmanifest",
+                               mimetype="application/manifest+json")
 
 
 @app.route("/run", methods=["POST"])

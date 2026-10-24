@@ -33,6 +33,7 @@ The tutor is instructed never to write corrected code, so the student always mak
 **Testing and tooling**
 - [axe-core](https://github.com/dequelabs/axe-core): automated accessibility checks
 - [Claude Code](https://claude.com/claude-code): AI coding assistant used during development
+- [PyMuPDF](https://pymupdf.readthedocs.io/), [potracer](https://github.com/tatarize/potrace) and [Pillow](https://python-pillow.org/): turning the logo into SVG and icon files
 
 ## Running it locally
 
@@ -69,6 +70,21 @@ The interface is designed to meet WCAG 2.2 AA:
 - full keyboard support, a skip link and visible focus
 - screen-reader announcements for status messages and new hints
 - support for reduced motion and Windows high-contrast mode
+
+## Logo and icons
+
+The logo is a question mark whose dot is a beetle. Below 48 px it switches to the simplified "favicon cut", where the beetle becomes a split circle.
+
+| File | Use |
+| --- | --- |
+| `static/img/logo.svg` | Full-detail mark, used in the site header |
+| `static/img/logo-small.svg` | Favicon cut, for 32 px and below |
+| `static/icons/favicon.svg`, `favicon.ico` | Browser tab icon |
+| `static/icons/apple-touch-icon.png` | iPhone and iPad home screen |
+| `static/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | Installable web app, through `static/site.webmanifest` |
+| `static/icons/app.ico` | Windows executable, for example with PyInstaller: `--icon static/icons/app.ico` |
+| `static/icons/icon-1024.png` | macOS app icon, or an Electron or Tauri build |
+| `static/icons/icon-16.png`, `icon-32.png`, `icon-48.png`, `icon-128.png` | Chrome extension, through the `"icons"` and `"action.default_icon"` fields of its `manifest.json` |
 
 ## Safety note
 
