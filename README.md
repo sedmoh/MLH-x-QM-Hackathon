@@ -32,7 +32,7 @@ The tutor is instructed never to write corrected code, so the student always mak
 
 **Testing and tooling**
 - [axe-core](https://github.com/dequelabs/axe-core): automated accessibility checks
-- [Claude Code](https://claude.com/claude-code): AI coding assistant used during development
+- [Claude](https://claude.com/): AI assistant used for logo creation
 - [PyMuPDF](https://pymupdf.readthedocs.io/), [potracer](https://github.com/tatarize/potrace) and [Pillow](https://python-pillow.org/): turning the logo into SVG and icon files
 
 ## Running it locally
