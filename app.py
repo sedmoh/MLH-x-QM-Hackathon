@@ -5,13 +5,18 @@ import sys
 import tempfile
 import time
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from google import genai
 from google.genai import types
 
+load_dotenv()
+
 app = Flask(__name__)
 
 MODEL = "gemma-4-26b-a4b-it"
+
+MAX_CODE_LENGTH = 20_000
 
 use_minimal_thinking = True
 
@@ -39,15 +44,21 @@ HINT_LEVELS = {
 
 def run_python(code):
     folder = tempfile.mkdtemp()
-    with open(os.path.join(folder, "main.py"), "w") as f:
+    with open(os.path.join(folder, "main.py"), "w", encoding="utf-8") as f:
         f.write(code)
+    # Force UTF-8 so printing non-ASCII text works the same on Windows.
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
     try:
         result = subprocess.run(
-            ["python3", "main.py"], cwd=folder, capture_output=True, text=True, timeout=5
+            [sys.executable, "main.py"], check=False, cwd=folder, capture_output=True,
+            text=True, encoding="utf-8", errors="replace", timeout=5, env=env,
         )
+        # Show "main.py" in tracebacks instead of the temporary folder path.
+        script_path = os.path.join(folder, "main.py")
         return {
             "stdout": result.stdout,
-            "stderr": result.stderr,
+            "stderr": result.stderr.replace(script_path, "main.py"),
+            "returncode": result.returncode,
             "timed_out": False,
         }
     except subprocess.TimeoutExpired:
@@ -55,10 +66,11 @@ def run_python(code):
             "stdout": "",
             "stderr": "Your program ran for more than 5 seconds and was stopped. "
                       "Is there an infinite loop?",
+            "returncode": None,
             "timed_out": True,
         }
     finally:
-        shutil.rmtree(folder)
+        shutil.rmtree(folder, ignore_errors=True)
 
 
 def ask_gemma(code, error_output, level):
@@ -88,7 +100,7 @@ Hint level {level} of 3. {HINT_LEVELS[level]}"""
                 ),
             )
             print(f"Hint level {level} took {time.time() - start:.1f}s (minimal thinking)")
-            return response.text
+            return response.text or ""
         except Exception as e:
             if "think" not in str(e).lower():
                 raise
@@ -101,7 +113,16 @@ Hint level {level} of 3. {HINT_LEVELS[level]}"""
         config=types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION),
     )
     print(f"Hint level {level} took {time.time() - start:.1f}s")
-    return response.text
+    return response.text or ""
+
+
+def read_code(data):
+    code = data.get("code", "")
+    if not isinstance(code, str) or not code.strip():
+        return None, "Please paste some Python code first."
+    if len(code) > MAX_CODE_LENGTH:
+        return None, f"Your code is too long. Please keep it under {MAX_CODE_LENGTH:,} characters."
+    return code, None
 
 
 @app.route("/")
@@ -111,18 +132,30 @@ def index():
 
 @app.route("/run", methods=["POST"])
 def run():
-    code = request.json.get("code", "")
+    data = request.get_json(silent=True) or {}
+    code, error = read_code(data)
+    if error:
+        return jsonify({"error": error}), 400
     return jsonify(run_python(code))
 
 
 @app.route("/hint", methods=["POST"])
 def hint():
-    code = request.json.get("code", "")
-    output = request.json.get("output", "")
-    level = int(request.json.get("level", 1))
+    data = request.get_json(silent=True) or {}
+    code, error = read_code(data)
+    if error:
+        return jsonify({"error": error}), 400
+
+    output = data.get("output", "")
+    if not isinstance(output, str):
+        output = ""
+    try:
+        level = int(data.get("level", 1))
+    except (TypeError, ValueError):
+        level = 1
     level = max(1, min(level, 3))
 
-    if "GEMINI_API_KEY" not in os.environ:
+    if not os.environ.get("GEMINI_API_KEY"):
         return jsonify({"error": "GEMINI_API_KEY is not set on the server."}), 500
 
     try:
@@ -131,7 +164,10 @@ def hint():
         print("Gemma error:", e, file=sys.stderr)
         return jsonify({"error": "Could not get a hint from Gemma: " + str(e)}), 500
 
-    return jsonify({"hint": text, "level": level})
+    if not text.strip():
+        return jsonify({"error": "Gemma returned an empty hint. Please try again."}), 502
+
+    return jsonify({"hint": text.strip(), "level": level})
 
 
 if __name__ == "__main__":
