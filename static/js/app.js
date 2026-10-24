@@ -333,6 +333,92 @@
     els.gutter.scrollTop = els.code.scrollTop;
   }
 
+  /* ---------- Editor keys ---------- */
+
+  const INDENT = 4;
+  const DEDENT_AFTER = /^\s*(return|pass|break|continue|raise)\b/;
+  let tabLeavesEditor = false;
+
+  // execCommand keeps the browser's undo history (Ctrl+Z); fall back if it's unavailable.
+  function insertText(text) {
+    if (text === "" ? document.execCommand("delete") : document.execCommand("insertText", false, text)) return;
+    els.code.setRangeText(text, els.code.selectionStart, els.code.selectionEnd, "end");
+    els.code.dispatchEvent(new Event("input"));
+  }
+
+  function lineStartOf(pos) {
+    return els.code.value.lastIndexOf("\n", pos - 1) + 1;
+  }
+
+  function cursorColumn() {
+    return els.code.selectionStart - lineStartOf(els.code.selectionStart);
+  }
+
+  function selectionSpansLines() {
+    const { selectionStart: s, selectionEnd: e, value } = els.code;
+    return value.slice(s, e).includes("\n");
+  }
+
+  function newLineWithIndent() {
+    const pos = els.code.selectionStart;
+    const before = els.code.value.slice(lineStartOf(pos), pos);
+    let indent = before.match(/^[ \t]*/)[0];
+    const code = before.replace(/#.*$/, "").trimEnd();
+
+    if (code.endsWith(":")) {
+      indent += " ".repeat(INDENT);
+    } else if (DEDENT_AFTER.test(before)) {
+      indent = indent.slice(0, Math.max(0, indent.length - INDENT));
+    }
+    insertText("\n" + indent);
+  }
+
+  // Applies fn to every line touched by the selection, keeping the selection on those lines.
+  function changeLines(fn) {
+    const { selectionStart: s, selectionEnd: e, value } = els.code;
+    const start = lineStartOf(s);
+    // A selection ending at the very start of a line doesn't include that line.
+    const last = e > s && value[e - 1] === "\n" ? e - 1 : e;
+    let end = value.indexOf("\n", last);
+    if (end === -1) end = value.length;
+
+    const lines = value.slice(start, end).split("\n");
+    const changed = lines.map(fn);
+    const result = changed.join("\n");
+    if (result === value.slice(start, end)) return;
+
+    els.code.setSelectionRange(start, end);
+    insertText(result);
+    const firstShift = changed[0].length - lines[0].length;
+    els.code.setSelectionRange(Math.max(start, s + firstShift), e + result.length - (end - start));
+  }
+
+  function indentLines() {
+    changeLines(function (line) {
+      return line ? " ".repeat(INDENT) + line : line;
+    });
+  }
+
+  function outdentLines() {
+    changeLines(function (line) {
+      if (line.startsWith("\t")) return line.slice(1);
+      return line.replace(new RegExp("^ {1," + INDENT + "}"), "");
+    });
+  }
+
+  // Backspace inside leading spaces removes back to the previous indent level.
+  function deleteIndentLevel() {
+    const { selectionStart: s, selectionEnd: e } = els.code;
+    if (s !== e) return false;
+    const leading = els.code.value.slice(lineStartOf(s), s);
+    if (!leading || /[^ ]/.test(leading)) return false;
+
+    const remove = leading.length % INDENT || INDENT;
+    els.code.setSelectionRange(s - remove, s);
+    insertText("");
+    return true;
+  }
+
   /* ---------- Theme ---------- */
 
   const themeToggle = document.getElementById("themeToggle");
@@ -376,10 +462,45 @@
     els.gutter.scrollTop = els.code.scrollTop;
   });
   els.code.addEventListener("keydown", function (event) {
+    if (event.isComposing) return;
+
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       helpMe();
+      return;
     }
+
+    // Esc, then Tab, leaves the editor, so keyboard users are never trapped in it.
+    if (event.key === "Escape") {
+      tabLeavesEditor = true;
+      return;
+    }
+    if (event.key === "Tab" && tabLeavesEditor) {
+      tabLeavesEditor = false;
+      return;
+    }
+    tabLeavesEditor = false;
+
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      newLineWithIndent();
+    } else if (event.key === "Tab") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        outdentLines();
+      } else if (selectionSpansLines()) {
+        indentLines();
+      } else {
+        insertText(" ".repeat(INDENT - (cursorColumn() % INDENT)));
+      }
+    } else if (event.key === "Backspace" && deleteIndentLevel()) {
+      event.preventDefault();
+    }
+  });
+  els.code.addEventListener("blur", function () {
+    tabLeavesEditor = false;
   });
 
   updateGutter();
