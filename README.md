@@ -2,6 +2,8 @@
 
 **Hints, not answers.** A debugging tutor for beginner Python students, built at the MLH x QM Hackathon.
 
+WINNERS OF BEST OPEN-SOURCE AI PROJECT TRACK and 3RD PLACE OVERALL
+
 Paste in a Python program that isn't working. Socratic Debugger runs it, shows you the real output, and then asks you guiding questions instead of handing you the fix. Each time you're still stuck, the hint gets more specific. It never gives you the corrected code, so you always make the fix yourself.
 
 ## The problem
